@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace WanseokBot;
+namespace WanseokBot.Services;
 
 public class DiscordStartupService : IHostedService
 {
@@ -12,7 +12,7 @@ public class DiscordStartupService : IHostedService
     public DiscordStartupService(DiscordSocketClient discord, ILogger<DiscordSocketClient> logger)
     {
         _discord = discord;
-        _discord.Log += msg => Task.Run(() => logger.LogInformation(msg.ToString()));
+        _discord.Log += msg => Task.Run(() => Console.WriteLine(msg.ToString()));
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

@@ -7,12 +7,12 @@ public class GeneralModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("ping", "Ping pong!")]
     public async Task PingAsync()
     {
-        await ReplyAsync("Pong!");
+        await RespondAsync();
     }
 
     [SlashCommand("echo", "Echoes your input")]
     public async Task EchoAsync(string input)
     {
-        await ReplyAsync(input);
+        await RespondAsync(input);
     }
 }

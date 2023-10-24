@@ -4,7 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Hosting;
 
-namespace WanseokBot;
+namespace WanseokBot.Services;
 
 public class InteractionHandlingService : IHostedService
 {
@@ -12,7 +12,8 @@ public class InteractionHandlingService : IHostedService
     private readonly InteractionService _interactions;
     private readonly IServiceProvider _services;
 
-    public InteractionHandlingService(DiscordSocketClient client, InteractionService interactions, IServiceProvider services)
+    public InteractionHandlingService(DiscordSocketClient client, InteractionService interactions,
+        IServiceProvider services)
     {
         _client = client;
         _interactions = interactions;
@@ -21,10 +22,7 @@ public class InteractionHandlingService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _client.Ready += async () =>
-        {
-            await _interactions.RegisterCommandsGloballyAsync();
-        };
+        _client.Ready += async () => { await _interactions.RegisterCommandsGloballyAsync(); };
 
         _client.InteractionCreated += HandleInteractionAsync;
         await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
@@ -50,10 +48,8 @@ public class InteractionHandlingService : IHostedService
         catch
         {
             if (interaction.Type != InteractionType.ApplicationCommand)
-            {
                 await interaction.GetOriginalResponseAsync()
                     .ContinueWith(msg => msg.Result.DeleteAsync());
-            }
         }
     }
 }
