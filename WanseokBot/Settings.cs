@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace WanseokBot;
 
 [Serializable]
@@ -20,4 +22,46 @@ public class Settings
         { "dailyRecord", new NotificationSetting() },
         { "dailyWeather", new NotificationSetting() }
     };
+
+    public void Watch()
+    {
+        var watcher = new FileSystemWatcher
+        {
+            Path = ".",
+            Filter = "settings.json",
+            NotifyFilter = NotifyFilters.LastWrite
+        };
+
+        watcher.Changed += (_, _) =>
+        {
+            Console.WriteLine("settings.json changed.");
+            ReloadSettings();
+            Console.WriteLine("settings.json reloaded.");
+        };
+        watcher.EnableRaisingEvents = true;
+    }
+
+    private void ReloadSettings()
+    {
+        CheckFileAndInitialize();
+
+        var json = File.ReadAllText("settings.json");
+        JsonConvert.PopulateObject(json, this);
+    }
+
+    public static Settings Load()
+    {
+        CheckFileAndInitialize();
+
+        var settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText("settings.json"))!;
+        File.WriteAllText("settings.json", JsonConvert.SerializeObject(settings, Formatting.Indented));
+        settings.Watch();
+        return settings;
+    }
+
+    private static void CheckFileAndInitialize()
+    {
+        if (!File.Exists("settings.json"))
+            File.WriteAllText("settings.json", JsonConvert.SerializeObject(new Settings(), Formatting.Indented));
+    }
 }

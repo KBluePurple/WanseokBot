@@ -15,85 +15,87 @@ public class WeatherService
 
     public async Task<WeatherInfo[]> GetToday(int x, int y)
     {
-        using var client = new HttpClient();
-
-        var now = DateTime.Now;
-
-        var times = _times.Select(s =>
+        do
         {
-            var t = DateTime.Now;
-            var h = int.Parse(s[..2]);
-            var m = int.Parse(s[2..]);
-            return new DateTime(t.Year, t.Month, t.Day, h, m, 0);
-        }).ToArray();
+            using var client = new HttpClient();
 
-        var baseDateTime = times.First(t => t <= now);
+            var now = DateTime.Now;
 
-        var url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
-        url += $"?ServiceKey={_settings.OpenDataApiKey}";
-        url += "&pageNo=1";
-        url += "&numOfRows=1000";
-        url += "&dataType=JSON";
-        url += $"&base_date={baseDateTime:yyyyMMdd}";
-        url += $"&base_time={baseDateTime:HHmm}";
-        url += $"&nx={x}";
-        url += $"&ny={y}";
-
-        try
-        {
-            var response = await client.GetAsync(url);
-
-            var content = await response.Content.ReadAsStringAsync();
-
-            var json = JObject.Parse(content);
-            var items = json["response"]?["body"]?["items"]?["item"]?.ToArray();
-
-            if (items == null) return Array.Empty<WeatherInfo>();
-
-            var weatherInfos = new Dictionary<DateTime, WeatherInfo>();
-            foreach (var item in items)
+            var times = _times.Select(s =>
             {
-                var category = item["category"]?.ToString();
-                var value = item["fcstValue"]?.ToString();
+                var t = DateTime.Now;
+                var h = int.Parse(s[..2]);
+                var m = int.Parse(s[2..]);
+                return new DateTime(t.Year, t.Month, t.Day, h, m, 0);
+            }).ToArray();
 
-                var fcstDate = item["fcstDate"]?.ToString();
-                var fcstTime = item["fcstTime"]?.ToString();
+            var baseDateTime = times.First(t => t <= now);
 
-                var fcstDateTime = DateTime.ParseExact($"{fcstDate}{fcstTime}", "yyyyMMddHHmm", null);
+            var url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
+            url += $"?ServiceKey={_settings.OpenDataApiKey}";
+            url += "&pageNo=1";
+            url += "&numOfRows=1000";
+            url += "&dataType=JSON";
+            url += $"&base_date={baseDateTime:yyyyMMdd}";
+            url += $"&base_time={baseDateTime:HHmm}";
+            url += $"&nx={x}";
+            url += $"&ny={y}";
 
-                if (category == null || value == null) continue;
+            try
+            {
+                var response = await client.GetAsync(url);
 
-                var weatherInfo = weatherInfos.TryGetValue(fcstDateTime, out var info) ? info : new WeatherInfo();
+                var content = await response.Content.ReadAsStringAsync();
 
-                weatherInfo.Time = fcstDateTime;
+                var json = JObject.Parse(content);
+                var items = json["response"]?["body"]?["items"]?["item"]?.ToArray();
 
-                switch (category)
+                if (items == null) return Array.Empty<WeatherInfo>();
+
+                var weatherInfos = new Dictionary<DateTime, WeatherInfo>();
+                foreach (var item in items)
                 {
-                    case "TMP":
-                        weatherInfo.Temperature = float.Parse(value);
-                        break;
-                    case "RN1":
-                        if (value == "강수없음") value = "-1";
-                        weatherInfo.Rainfall = float.Parse(value);
-                        break;
-                    case "SKY":
-                        weatherInfo.Sky = (Sky)Enum.Parse(typeof(Sky), value);
-                        break;
-                    case "PTY":
-                        weatherInfo.State = (State)Enum.Parse(typeof(State), value);
-                        break;
+                    var category = item["category"]?.ToString();
+                    var value = item["fcstValue"]?.ToString();
+
+                    var fcstDate = item["fcstDate"]?.ToString();
+                    var fcstTime = item["fcstTime"]?.ToString();
+
+                    var fcstDateTime = DateTime.ParseExact($"{fcstDate}{fcstTime}", "yyyyMMddHHmm", null);
+
+                    if (category == null || value == null) continue;
+
+                    var weatherInfo = weatherInfos.TryGetValue(fcstDateTime, out var info) ? info : new WeatherInfo();
+
+                    weatherInfo.Time = fcstDateTime;
+
+                    switch (category)
+                    {
+                        case "TMP":
+                            weatherInfo.Temperature = float.Parse(value);
+                            break;
+                        case "RN1":
+                            if (value == "강수없음") value = "-1";
+                            weatherInfo.Rainfall = float.Parse(value);
+                            break;
+                        case "SKY":
+                            weatherInfo.Sky = (Sky)Enum.Parse(typeof(Sky), value);
+                            break;
+                        case "PTY":
+                            weatherInfo.State = (State)Enum.Parse(typeof(State), value);
+                            break;
+                    }
+
+                    weatherInfos[weatherInfo.Time] = weatherInfo;
                 }
 
-                weatherInfos[weatherInfo.Time] = weatherInfo;
+                return weatherInfos.Values.ToArray();
             }
-
-            return weatherInfos.Values.ToArray();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        } while (true);
     }
 }
 

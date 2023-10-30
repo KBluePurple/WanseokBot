@@ -4,6 +4,7 @@ using Quartz;
 
 namespace WanseokBot.Services;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class DailyWeatherNotificationJob : IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -15,19 +16,11 @@ public class DailyWeatherNotificationJob : IJob
         var calendarService = (CalenderService)dataMap["calenderService"];
         var weatherService = (WeatherService)dataMap["weatherService"];
 
-        var pangyo = await weatherService.GetToday(62, 123);
-        var pangyoString =
-            string.Join("\n", pangyo
-                .Where(x => x.Time.Day == DateTime.Now.Day)
-                .Select(x => x.ToKorean())
-            );
+        var pangyoWeatherInfos = await weatherService.GetToday(62, 123);
+        var pangyoString = GetWeatherString(pangyoWeatherInfos);
 
-        var gangnam = await weatherService.GetToday(61, 125);
-        var gangnamString =
-            string.Join("\n", gangnam
-                .Where(x => x.Time.Day == DateTime.Now.Day)
-                .Select(x => x.ToKorean())
-            );
+        var gangnamWeatherInfos = await weatherService.GetToday(61, 125);
+        var gangnamString = GetWeatherString(gangnamWeatherInfos);
 
         Console.WriteLine(pangyoString);
 
@@ -68,5 +61,38 @@ public class DailyWeatherNotificationJob : IJob
 
         var message = await channel.SendMessageAsync(text, embed: embed);
         await message.AddReactionAsync(new Emoji("✅"));
+    }
+
+    private static string GetWeatherString(IReadOnlyList<WeatherInfo> weatherInfos)
+    {
+        const string temperatureStringBase = "최저 기온은 {0}시에 {1}도이며, 최고 기온은 {2}시에 {3}도입니다.";
+        const string noRainStringBase = "비/눈 소식은 없습니다.";
+        const string statusStringBase = "6시부터 10시까지 {0}이(가) 내릴 확률이 있습니다!\n🌂우산을 챙기세요!";
+
+        var (lowestTemperatureInfo, highestTemperatureInfo) = weatherInfos
+            .OrderBy(w => w.Temperature)
+            .Aggregate(
+                (lowest: weatherInfos[0], highest: weatherInfos[0]),
+                (acc, w) => (
+                    w.Temperature < acc.lowest.Temperature ? w : acc.lowest,
+                    w.Temperature > acc.highest.Temperature ? w : acc.highest
+                )
+            );
+
+        var temperatureString = string.Format(
+            temperatureStringBase,
+            lowestTemperatureInfo.Time.ToString("HH"),
+            lowestTemperatureInfo.Temperature,
+            highestTemperatureInfo.Time.ToString("HH"),
+            highestTemperatureInfo.Temperature
+        );
+
+        var rainInfo = weatherInfos.Where(w => w.Time.Hour is >= 6 and <= 22).MaxBy(w => w.Rainfall);
+
+        var rainString = rainInfo is { Rainfall: 0 }
+            ? noRainStringBase
+            : string.Format(statusStringBase, rainInfo?.State.ToKorean());
+
+        return $"{temperatureString}\n{rainString}";
     }
 }
