@@ -6,11 +6,13 @@ namespace WanseokBot.Services;
 
 public class CalenderService
 {
+    private readonly Settings _settings;
     private readonly HashSet<DateTime> _holidays = new();
     private DateTime _lastUpdate = DateTime.MinValue;
 
-    public CalenderService()
+    public CalenderService(Settings settings)
     {
+        _settings = settings;
         UpdateHolidays().Wait();
     }
 
@@ -26,7 +28,7 @@ public class CalenderService
     {
         using var client = new HttpClient();
         var response = await client.GetAsync(
-            "https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo?serviceKey=3waHcJo7VaTeRYq6U2eFaqL8ikgfUCmGVNAPFtbwUyVUgoZlcq%2BoKGrFXRicPEr5DHU8R3gkLncQqyECSF%2FrCg%3D%3D&solYear=2023&solMonth=10&_type=json");
+            $"https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo?serviceKey={_settings.OpenDataApiKey}&solYear=2023&solMonth=10&_type=json");
 
         var json = await response.Content.ReadAsStringAsync();
         var data = JsonConvert.DeserializeObject<CalenderResponse>(json);
@@ -42,5 +44,7 @@ public class CalenderService
         }
 
         _lastUpdate = DateTime.Now;
+
+        Console.WriteLine("CalenderService updated.");
     }
 }

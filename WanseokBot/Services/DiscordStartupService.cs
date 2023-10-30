@@ -8,16 +8,18 @@ namespace WanseokBot.Services;
 public class DiscordStartupService : IHostedService
 {
     private readonly DiscordSocketClient _discord;
+    private readonly Settings _settings;
 
-    public DiscordStartupService(DiscordSocketClient discord, ILogger<DiscordSocketClient> logger)
+    public DiscordStartupService(DiscordSocketClient discord, Settings settings, ILogger<DiscordSocketClient> logger)
     {
         _discord = discord;
+        _settings = settings;
         _discord.Log += msg => Task.Run(() => Console.WriteLine(msg.ToString()));
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await _discord.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("TOKEN"));
+        await _discord.LoginAsync(TokenType.Bot, _settings.Token);
         await _discord.StartAsync();
     }
 

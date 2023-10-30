@@ -4,6 +4,7 @@ using Quartz;
 
 namespace WanseokBot.Services;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class DailyRecordNotificationJob : IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -13,13 +14,14 @@ public class DailyRecordNotificationJob : IJob
         var dataMap = context.JobDetail.JobDataMap;
 
         var calendarService = (CalenderService)dataMap["calenderService"];
-
         if (calendarService.IsHoliday(DateTime.Now)) return;
 
+        var dailyRecordNotification = (Settings.NotificationSetting)dataMap["settings"];
+
         var client = (DiscordSocketClient)dataMap["client"];
-        var guildId = (ulong)dataMap["guildId"];
-        var channelId = (ulong)dataMap["channelId"];
-        var roleId = (ulong)dataMap["roleId"];
+        var guildId = dailyRecordNotification.GuildId;
+        var channelId = dailyRecordNotification.ChannelId;
+        var roleId = dailyRecordNotification.RoleId;
 
         var guild = client.GetGuild(guildId);
         var channel = guild.GetTextChannel(channelId);
@@ -39,6 +41,7 @@ public class DailyRecordNotificationJob : IJob
 
         var text = $"||<@&{roleId}>||";
 
-        await channel.SendMessageAsync(text, embed: embed);
+        var message = await channel.SendMessageAsync(text, embed: embed);
+        await message.AddReactionAsync(new Emoji("✅"));
     }
 }
