@@ -14,8 +14,13 @@ public class Settings
         public string Cron { get; set; } = "0 30 20 * * ?";
     }
 
-    public string Token { get; set; } = "";
+    public static Settings Instance { get; set; } = new();
+
+    public IServiceProvider ServiceProvider { get; set; } = null!;
+
+    public string DiscordToken { get; set; } = "";
     public string OpenDataApiKey { get; set; } = "";
+    public string GoogleApiKey { get; set; } = "";
 
     public Dictionary<string, NotificationSetting> Notifications { get; set; } = new()
     {
@@ -47,6 +52,8 @@ public class Settings
 
         var json = File.ReadAllText("settings.json");
         JsonConvert.PopulateObject(json, this);
+
+        File.WriteAllText("settings.json", JsonConvert.SerializeObject(this, Formatting.Indented));
     }
 
     public static Settings Load()
@@ -56,6 +63,7 @@ public class Settings
         var settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText("settings.json"))!;
         File.WriteAllText("settings.json", JsonConvert.SerializeObject(settings, Formatting.Indented));
         settings.Watch();
+        Instance = settings;
         return settings;
     }
 

@@ -12,10 +12,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1"/>
         <PackageReference Include="Quartz" Version="3.7.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Services\MealService\" />
+        <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
     </ItemGroup>
 
 </Project>
