@@ -4,7 +4,6 @@ using Quartz;
 
 namespace WanseokBot.Services;
 
-// ReSharper disable once ClassNeverInstantiated.Global
 public class DailyRecordNotificationJob : IJob
 {
     public async Task Execute(IJobExecutionContext context)

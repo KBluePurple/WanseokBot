@@ -53,6 +53,7 @@ public class ScheduledNotificationService : IHostedService
 
         var trigger = TriggerBuilder.Create()
             .WithIdentity("daily-record-notification-trigger")
+            .StartNow()
             .WithSchedule(CronScheduleBuilder.CronSchedule(notificationSettings!.Cron))
             .Build();
 
@@ -75,6 +76,7 @@ public class ScheduledNotificationService : IHostedService
 
         var weatherTrigger = TriggerBuilder.Create()
             .WithIdentity("daily-weather-notification-trigger")
+            .StartNow()
             .WithSchedule(CronScheduleBuilder.CronSchedule(weatherSettings!.Cron))
             .Build();
 

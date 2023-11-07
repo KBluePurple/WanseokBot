@@ -13,7 +13,7 @@ public class WeatherService
 
     private readonly string[] _times = { "0220", "0520", "0820", "1120", "1420", "1720", "2020", "2320" };
 
-    public async Task<WeatherInfo[]> GetToday(int x, int y)
+    public async Task<WeatherInfo[]> Get(int x, int y)
     {
         do
         {
@@ -29,7 +29,13 @@ public class WeatherService
                 return new DateTime(t.Year, t.Month, t.Day, h, m, 0);
             }).ToArray();
 
-            var baseDateTime = times.First(t => t <= now);
+            var baseDateTime = times.FirstOrDefault(t => t <= now, DateTime.MinValue);
+
+            if (baseDateTime == DateTime.MinValue)
+            {
+                var yesterday = DateTime.Now.AddDays(-1);
+                baseDateTime = new DateTime(yesterday.Year, yesterday.Month, yesterday.Day, 23, 20, 0);
+            }
 
             var url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
             url += $"?ServiceKey={_settings.OpenDataApiKey}";
@@ -74,9 +80,9 @@ public class WeatherService
                         case "TMP":
                             weatherInfo.Temperature = float.Parse(value);
                             break;
-                        case "RN1":
-                            if (value == "강수없음") value = "-1";
-                            weatherInfo.Rainfall = float.Parse(value);
+                        case "PCP":
+                            if (value == "강수없음") value = "0";
+                            weatherInfo.Rainfall = float.Parse(value.Replace("mm", ""));
                             break;
                         case "SKY":
                             weatherInfo.Sky = (Sky)Enum.Parse(typeof(Sky), value);
@@ -164,7 +170,6 @@ public static class WeatherInfoExtensions
     {
         var time = weatherInfo.Time.ToString("HH시");
         var temperature = $"{weatherInfo.Temperature}℃";
-        // var rainfall = $"{weatherInfo.Rainfall}mm";
         var sky = weatherInfo.Sky.ToKorean();
         var state = weatherInfo.State.ToKorean();
 

@@ -43,7 +43,7 @@ public class InteractionHandlingService : IHostedService
             var result = await _interactions.ExecuteCommandAsync(context, _services);
 
             if (!result.IsSuccess)
-                await interaction.RespondAsync(result.ToString());
+                await interaction.RespondAsync(result.ToString(), ephemeral: true);
         }
         catch
         {
