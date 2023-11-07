@@ -12,6 +12,8 @@ var config = new DiscordSocketConfig
     MessageCacheSize = 100
 };
 
+Database.Initialize();
+
 using var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
@@ -20,10 +22,13 @@ using var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<InteractionService>();
         services.AddSingleton<CalenderService>();
         services.AddSingleton<WeatherService>();
+        services.AddSingleton<MealService>();
         services.AddHostedService<DiscordStartupService>();
         services.AddHostedService<InteractionHandlingService>();
         services.AddHostedService<ScheduledNotificationService>();
     })
     .Build();
+
+Settings.Instance.ServiceProvider = host.Services;
 
 await host.RunAsync();
