@@ -13,37 +13,44 @@ public class MealModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("meal", "주변 맛집을 알려줘요!")]
     public async Task MealAsync()
     {
-        var address = await Database.GetMealAddress(Context.User.Id);
-
-        if (string.IsNullOrEmpty(address))
+        try
         {
-            await RespondWithModalAsync<MealModal>(CustomId);
-            return;
+            var address = await Database.GetMealAddress(Context.User.Id);
+
+            if (string.IsNullOrEmpty(address))
+            {
+                await RespondWithModalAsync<MealModal>(CustomId);
+                return;
+            }
+
+            var result = await _mealService.Search(address);
+
+            if (result.Length == 0)
+            {
+                await RespondAsync("주변에 맛집이 없어요!");
+                return;
+            }
+
+            var embed = new EmbedBuilder()
+                .WithTitle("주변 맛집 추천")
+                .WithDescription($"**{address}** 주변 맛집을 추천해드릴게요!")
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp();
+
+            foreach (var place in result)
+            {
+                if (embed.Fields.Count >= 5) break;
+                if (place.Rating < 4.0f) continue;
+
+                embed.AddField(place.Name, $"{place.Address}\n⭐ {place.Rating}점");
+            }
+
+            await RespondAsync(embed: embed.Build());
         }
-
-        var result = await _mealService.Search(address);
-
-        if (result.Length == 0)
+        catch (Exception e)
         {
             await RespondAsync("주변에 맛집이 없어요!");
-            return;
         }
-
-        var embed = new EmbedBuilder()
-            .WithTitle("주변 맛집 추천")
-            .WithDescription($"**{address}** 주변 맛집을 추천해드릴게요!")
-            .WithColor(Color.Blue)
-            .WithCurrentTimestamp();
-
-        foreach (var place in result)
-        {
-            if (embed.Fields.Count >= 5) break;
-            if (place.Rating < 4.0f) continue;
-
-            embed.AddField(place.Name, $"{place.Address}\n⭐ {place.Rating}점");
-        }
-
-        await RespondAsync(embed: embed.Build());
     }
 
     [ModalInteraction(CustomId)]
