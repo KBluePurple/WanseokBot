@@ -37,7 +37,7 @@ public class DailyWeatherNotificationJob : IJob
         var channel = guild.GetTextChannel(channelId);
         var role = guild.GetRole(roleId);
 
-        var embed = new EmbedBuilder()
+        var embedBuilder = new EmbedBuilder()
             .WithColor(role.Color)
             .WithAuthor("굿모닝 날씨 알림!", guild.IconUrl)
             .WithDescription(
@@ -58,12 +58,21 @@ public class DailyWeatherNotificationJob : IJob
                     .WithIsInline(true)
             )
             .WithTimestamp(DateTimeOffset.Now)
-            .WithFooter("정보 제공: 기상청")
-            .Build();
+            .WithFooter("정보 제공: 기상청");
+
+        if (DateTime.Now.DayOfWeek is DayOfWeek.Friday)
+        {
+            embedBuilder.Fields.Add(
+                new EmbedFieldBuilder()
+                    .WithName("내일은...")
+                    .WithValue("🎉금요일🎉\n이번 주 마지막 날!\n이번 주도 수고 많으셨습니다! 힘내세요!")
+                    .WithIsInline(true)
+            );
+        }
 
         var text = $"||<@&{roleId}>||";
 
-        var message = await channel.SendMessageAsync(text, embed: embed);
+        var message = await channel.SendMessageAsync(text, embed: embedBuilder.Build());
         await message.AddReactionAsync(new Emoji("✅"));
     }
 
