@@ -37,27 +37,27 @@ public class ScheduledNotificationService : IHostedService
         var scheduler = await StdSchedulerFactory.GetDefaultScheduler();
         await scheduler.Start();
 
-        var notificationSettings = _settings.Notifications["dailyRecord"];
+        // var notificationSettings = _settings.Notifications["dailyRecord"];
 
-        var data = new JobDataMap
-        {
-            { "calenderService", _calender },
-            { "client", _client },
-            { "settings", notificationSettings }
-        };
+        // var data = new JobDataMap
+        // {
+        //     { "calenderService", _calender },
+        //     { "client", _client },
+        //     { "settings", notificationSettings }
+        // };
 
-        var job = JobBuilder.Create<DailyRecordNotificationJob>()
-            .WithIdentity("daily-record-notification-job")
-            .SetJobData(data)
-            .Build();
+        // var job = JobBuilder.Create<DailyRecordNotificationJob>()
+        //     .WithIdentity("daily-record-notification-job")
+        //     .SetJobData(data)
+        //     .Build();
 
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity("daily-record-notification-trigger")
-            .StartNow()
-            .WithSchedule(CronScheduleBuilder.CronSchedule(notificationSettings!.Cron))
-            .Build();
+        // var trigger = TriggerBuilder.Create()
+        //     .WithIdentity("daily-record-notification-trigger")
+        //     .StartNow()
+        //     .WithSchedule(CronScheduleBuilder.CronSchedule(notificationSettings!.Cron))
+        //     .Build();
 
-        await scheduler.ScheduleJob(job, trigger);
+        // await scheduler.ScheduleJob(job, trigger);
 
         var weatherSettings = _settings.Notifications["dailyWeather"];
 
